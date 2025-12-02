@@ -1,11 +1,10 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../models/list_model.dart';
 
 class ListService {
   static final _client = SupabaseConfig.client;
 
-  // Obtener listas por tablero
+  // Obtener listas de un tablero
   static Future<List<ListModel>> getLists(int boardId) async {
     final response = await _client
         .from('lists')
@@ -13,20 +12,20 @@ class ListService {
         .eq('board_id', boardId)
         .order('position', ascending: true);
 
-    final List data = response as List<dynamic>;
-    return data.map<ListModel>((d) => ListModel.fromJson(d as Map<String, dynamic>)).toList();
+    final List data = response as List;
+
+    return data.map((item) => ListModel.fromJson(item)).toList();
   }
 
-  // Crear nueva lista
+  // Crear lista
   static Future<void> createList(String title, int boardId) async {
-    // Obtener listas actuales para asignar position
     final resp = await _client
         .from('lists')
         .select('id')
         .eq('board_id', boardId);
 
     final List existing = resp as List<dynamic>;
-    final int pos = existing.length;
+    final pos = existing.length;
 
     await _client.from('lists').insert({
       'title': title,
@@ -35,24 +34,27 @@ class ListService {
     });
   }
 
-  // ==========================================================
-  // RENOMBRAR LISTA
-  // ==========================================================
-  static Future<void> renameList(int listId, String newName) async {
-    await _client.from('lists').update({'title': newName}).eq('id', listId);
+  // Editar lista
+  static Future<void> updateList(int id, String title) async {
+    await _client.from('lists').update({
+      'title': title,
+    }).eq('id', id);
   }
 
-  // ==========================================================
-  // ELIMINAR LISTA
-  // ==========================================================
-  static Future<void> deleteList(int listId) async {
-    await _client.from('lists').delete().eq('id', listId);
+  // Renombrar lista (alias para compatibilidad)
+  static Future<void> renameList(int id, String newName) async {
+    await updateList(id, newName);
   }
 
-  // ==========================================================
-  // ACTUALIZAR POSICIÓN (para reordenar listas)
-  // ==========================================================
-  static Future<void> updatePosition(int listId, int newPosition) async {
-    await _client.from('lists').update({'position': newPosition}).eq('id', listId);
+  // Actualizar posición de lista
+  static Future<void> updatePosition(int id, int newPosition) async {
+    await _client.from('lists').update({
+      'position': newPosition,
+    }).eq('id', id);
+  }
+
+  // Eliminar lista
+  static Future<void> deleteList(int id) async {
+    await _client.from('lists').delete().eq('id', id);
   }
 }

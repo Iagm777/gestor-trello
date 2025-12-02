@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
+import 'models/card_model.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/board/board_screen.dart';
-import 'screens/card/card_detail_screen.dart';
+import 'screens/card/card_details_screen.dart';
+import 'screens/card/create_card_screen.dart';
+import 'screens/card/edit_card_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +41,15 @@ class MyApp extends StatelessWidget {
       // Rutas
       routes: {
         "/board": (_) => const BoardScreen(),
-        "/card_detail": (_) => const CardDetailScreen(),
+        "/card-detail": (_) => const CardDetailsScreen(),
+        "/card-create": (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return CreateCardScreen(listId: args['listId'] as int);
+        },
+        "/card-edit": (context) {
+          final card = ModalRoute.of(context)!.settings.arguments as CardModel;
+          return EditCardScreen(card: card);
+        },
       },
     );
   }

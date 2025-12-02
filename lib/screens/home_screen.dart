@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/board_service.dart';
-import '../services/auth_service.dart';
+import '../config/supabase_config.dart';
 import '../models/board_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,12 +20,15 @@ class _HomeScreenState extends State<HomeScreen> {
     loadBoards();
   }
 
+  // ======================================================
+  // CARGAR TABLEROS DEL USUARIO AUTENTICADO
+  // ======================================================
   Future<void> loadBoards() async {
-    final user = AuthService.currentUser;
+    final user = SupabaseConfig.client.auth.currentUser;
 
     if (user == null) return;
 
-    final data = await BoardService.getBoards(user.id);
+    final data = await BoardService.getBoards(int.parse(user.id));
 
     setState(() {
       boards = data;
@@ -33,6 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // ======================================================
+  // DIALOGO PARA CREAR UN NUEVO TABLERO
+  // ======================================================
   void openCreateBoardDialog() {
     final controller = TextEditingController();
 
@@ -56,8 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
               final title = controller.text.trim();
               if (title.isEmpty) return;
 
-              final user = AuthService.currentUser;
-              await BoardService.createBoard(title, user!.id);
+              final user = SupabaseConfig.client.auth.currentUser;
+              if (user == null) return;
+
+              await BoardService.createBoard(title, int.parse(user.id));
 
               Navigator.pop(context);
               loadBoards();
@@ -69,6 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ======================================================
+  // UI PRINCIPAL
+  // ======================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,17 +88,19 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              AuthService.signOut();
+              SupabaseConfig.client.auth.signOut();
               Navigator.pushReplacementNamed(context, '/login');
             },
             icon: const Icon(Icons.logout),
           )
         ],
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: openCreateBoardDialog,
         child: const Icon(Icons.add),
       ),
+
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : boards.isEmpty
@@ -98,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final board = boards[i];
                     return ListTile(
                       title: Text(board.title),
+                      trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         Navigator.pushNamed(
                           context,

@@ -119,36 +119,13 @@ class _BoardScreenState extends State<BoardScreen> {
   // DIALOGO PARA AGREGAR TARJETAS
   // ==========================================================
   void openAddCardDialog(int listId) {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Nueva tarjeta'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Título'),
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Cancelar'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          ElevatedButton(
-            child: const Text('Crear'),
-            onPressed: () async {
-              final title = controller.text.trim();
-              if (title.isEmpty) return;
-
-              await CardService.createCard(title, listId);
-
-              Navigator.pop(context);
-              setState(() {}); // refrescar tarjetas
-            },
-          ),
-        ],
-      ),
-    );
+    Navigator.pushNamed(
+      context,
+      '/card-create',
+      arguments: {'listId': listId},
+    ).then((result) {
+      if (result == true) setState(() {});
+    });
   }
 
   // ==========================================================
@@ -286,7 +263,7 @@ class _BoardScreenState extends State<BoardScreen> {
                                 onTap: () async {
                                   final changed = await Navigator.pushNamed(
                                     context,
-                                    "/card_detail",
+                                    "/card-detail",
                                     arguments: cards[i],
                                   );
 

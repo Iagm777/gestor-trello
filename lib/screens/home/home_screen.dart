@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/board_service.dart';
 import '../../models/board_model.dart';
 import '../../widgets/board_widget.dart';
+import '../../config/supabase_config.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,9 +15,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<BoardModel> boards = [];
   bool loading = true;
 
-  // Dummy user ID for now (replace with real auth later)
-  final int currentUserId = 1;
-
   @override
   void initState() {
     super.initState();
@@ -24,7 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadBoards() async {
-    final data = await BoardService.getBoards(currentUserId);
+    final user = SupabaseConfig.client.auth.currentUser;
+    if (user == null) return;
+
+    final data = await BoardService.getBoards(int.parse(user.id));
     setState(() {
       boards = data;
       loading = false;
@@ -52,7 +53,10 @@ class _HomeScreenState extends State<HomeScreen> {
               final title = controller.text.trim();
               if (title.isEmpty) return;
 
-              await BoardService.createBoard(title, currentUserId);
+              final user = SupabaseConfig.client.auth.currentUser;
+              if (user == null) return;
+
+              await BoardService.createBoard(title, int.parse(user.id));
               Navigator.pop(context);
               loadBoards();
             },
