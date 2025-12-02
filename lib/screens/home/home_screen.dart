@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/board_service.dart';
 import '../../models/board_model.dart';
+import '../../widgets/board_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<BoardModel> boards = [];
   bool loading = true;
 
+  // Dummy user ID for now (replace with real auth later)
+  final int currentUserId = 1;
+
   @override
   void initState() {
     super.initState();
@@ -20,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadBoards() async {
-    final data = await BoardService.getBoards();
+    final data = await BoardService.getBoards(currentUserId);
     setState(() {
       boards = data;
       loading = false;
@@ -48,11 +52,35 @@ class _HomeScreenState extends State<HomeScreen> {
               final title = controller.text.trim();
               if (title.isEmpty) return;
 
-              await BoardService.createBoard(title);
+              await BoardService.createBoard(title, currentUserId);
               Navigator.pop(context);
               loadBoards();
             },
             child: const Text("Crear"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void deleteBoard(BoardModel board) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Eliminar tablero"),
+        content: Text("¿Eliminar '${board.title}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await BoardService.deleteBoard(board.id);
+              Navigator.pop(context);
+              loadBoards();
+            },
+            child: const Text("Eliminar"),
           ),
         ],
       ),
@@ -75,21 +103,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ? const Center(child: CircularProgressIndicator())
           : boards.isEmpty
               ? const Center(child: Text("No tienes tableros"))
-              : ListView.builder(
-                  itemCount: boards.length,
-                  itemBuilder: (_, i) {
-                    final b = boards[i];
-                    return ListTile(
-                      title: Text(b.title),
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          "/board",
-                          arguments: b,
-                        );
-                      },
-                    );
-                  },
+              : ListView(
+                  children: boards
+                      .map((b) => BoardWidget(
+                            board: b,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                "/board",
+                                arguments: b,
+                              );
+                            },
+                          ))
+                      .toList(),
                 ),
     );
   }

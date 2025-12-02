@@ -5,34 +5,35 @@ import '../models/board_model.dart';
 class BoardService {
   static final _client = SupabaseConfig.client;
 
-  // Obtener los tableros del usuario
-  static Future<List<BoardModel>> getBoards([String? userId]) async {
-    final uid = userId ?? _client.auth.currentUser?.id;
+  // Obtener boards del usuario
+  static Future<List<BoardModel>> getBoards(int userId) async {
+    final data = await _client
+        .from('boards')
+        .select()
+        .eq('user_id', userId)
+        .order('id');
 
-  if (uid == null) return [];
-
-  final response = await _client
-    .from('boards')
-    .select()
-    .eq('user_id', uid)
-    .order('created_at');
-
-  final List data = response as List<dynamic>;
-
-  return data.map<BoardModel>((d) => BoardModel.fromJson(d as Map<String, dynamic>)).toList();
+    return (data as List)
+        .map((e) => BoardModel.fromJson(e))
+        .toList();
   }
 
-  // Crear un nuevo tablero
-  static Future<void> createBoard(String title, [String? userId]) async {
-    final uid = userId ?? _client.auth.currentUser?.id;
-
+  // Crear board
+  static Future<void> createBoard(String title, int userId) async {
     await _client.from('boards').insert({
       'title': title,
-      'user_id': uid,
+      'user_id': userId,
     });
   }
 
-  // Eliminar un tablero
+  // Editar board
+  static Future<void> updateBoard(int id, String title) async {
+    await _client.from('boards').update({
+      'title': title,
+    }).eq('id', id);
+  }
+
+  // Eliminar board
   static Future<void> deleteBoard(int id) async {
     await _client.from('boards').delete().eq('id', id);
   }
