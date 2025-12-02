@@ -26,14 +26,38 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> loadBoards() async {
     final user = SupabaseConfig.client.auth.currentUser;
 
-    if (user == null) return;
+  if (user == null) {
+    // No authenticated user: stop loading and redirect to login.
+    if (mounted) {
+      setState(() {
+        loading = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pushReplacementNamed(context, '/login');
+      });
+    }
+    return;
+  }
 
-    final data = await BoardService.getBoards(int.parse(user.id));
+  try {
+    final data = await BoardService.getBoards(user.id);
+
+    if (!mounted) return;
 
     setState(() {
       boards = data;
       loading = false;
     });
+    // Debug log
+    // ignore: avoid_print
+    print('loadBoards: found ${boards.length} boards for user ${user.id}');
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      loading = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error cargando tableros: $e')));
+  }
   }
 
   // ======================================================
@@ -41,38 +65,60 @@ class _HomeScreenState extends State<HomeScreen> {
   // ======================================================
   void openCreateBoardDialog() {
     final controller = TextEditingController();
+    bool isLoading = false;
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Nuevo tablero'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Título del tablero',
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx2, setStateDialog) => AlertDialog(
+          title: const Text('Nuevo tablero'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Título del tablero',
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            isLoading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : ElevatedButton(
+                    onPressed: () async {
+                      final title = controller.text.trim();
+                      if (title.isEmpty) return;
+
+                      final user = SupabaseConfig.client.auth.currentUser;
+                      if (user == null) {
+                        Navigator.pop(context);
+                        // If no user, redirect to login so the user can authenticate.
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) Navigator.pushReplacementNamed(context, '/login');
+                        });
+                        return;
+                      }
+
+                      setStateDialog(() => isLoading = true);
+
+                      try {
+                        await BoardService.createBoard(title, user.id);
+                        // Refresh boards before closing the dialog to ensure UI updates.
+                        await loadBoards();
+                        Navigator.pop(context, true);
+                      } catch (e) {
+                        setStateDialog(() => isLoading = false);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al crear tablero: $e')));
+                      }
+                    },
+                    child: const Text('Crear'),
+                  ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final title = controller.text.trim();
-              if (title.isEmpty) return;
-
-              final user = SupabaseConfig.client.auth.currentUser;
-              if (user == null) return;
-
-              await BoardService.createBoard(title, int.parse(user.id));
-
-              Navigator.pop(context);
-              loadBoards();
-            },
-            child: const Text('Crear'),
-          ),
-        ],
       ),
     );
   }

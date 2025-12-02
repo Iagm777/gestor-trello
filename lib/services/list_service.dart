@@ -5,7 +5,7 @@ class ListService {
   static final _client = SupabaseConfig.client;
 
   // Obtener listas de un tablero
-  static Future<List<ListModel>> getLists(int boardId) async {
+  static Future<List<ListModel>> getLists(dynamic boardId) async {
     final response = await _client
         .from('lists')
         .select()
@@ -18,7 +18,7 @@ class ListService {
   }
 
   // Crear lista
-  static Future<void> createList(String title, int boardId) async {
+  static Future<void> createList(String title, dynamic boardId) async {
     final resp = await _client
         .from('lists')
         .select('id')
@@ -35,26 +35,26 @@ class ListService {
   }
 
   // Editar lista
-  static Future<void> updateList(int id, String title) async {
+  static Future<void> updateList(dynamic id, String title) async {
     await _client.from('lists').update({
       'title': title,
     }).eq('id', id);
   }
 
   // Renombrar lista (alias para compatibilidad)
-  static Future<void> renameList(int id, String newName) async {
+  static Future<void> renameList(dynamic id, String newName) async {
     await updateList(id, newName);
   }
 
   // Actualizar posición de lista
-  static Future<void> updatePosition(int id, int newPosition) async {
+  static Future<void> updatePosition(dynamic id, int newPosition) async {
     await _client.from('lists').update({
       'position': newPosition,
     }).eq('id', id);
   }
 
   // Eliminar lista
-  static Future<void> deleteList(int id) async {
+  static Future<void> deleteList(dynamic id) async {
     await _client.from('lists').delete().eq('id', id);
   }
 }

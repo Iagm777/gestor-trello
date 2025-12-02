@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/card_service.dart';
 
 class CreateCardScreen extends StatefulWidget {
-  final int listId;
+  final dynamic listId;
   const CreateCardScreen({super.key, required this.listId});
 
   @override

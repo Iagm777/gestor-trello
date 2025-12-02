@@ -1,6 +1,6 @@
 class ListModel {
-  final int id;
-  final int boardId;
+  final dynamic id;
+  final dynamic boardId;
   final String title;
   final int position;
 
@@ -15,8 +15,8 @@ class ListModel {
     return ListModel(
       id: json['id'],
       boardId: json['board_id'],
-      title: json['title'],
-      position: json['position'],
+      title: json['title'] ?? '',
+      position: (json['position'] ?? 0) as int,
     );
   }
 }

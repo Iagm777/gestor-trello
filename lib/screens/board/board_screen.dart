@@ -57,7 +57,7 @@ class _BoardScreenState extends State<BoardScreen> {
   // ==========================================================
   // ELIMINAR LISTA
   // ==========================================================
-  Future<void> deleteList(int listId) async {
+  Future<void> deleteList(dynamic listId) async {
     await ListService.deleteList(listId);
     loadData();
   }
@@ -80,7 +80,7 @@ class _BoardScreenState extends State<BoardScreen> {
   // ==========================================================
   // DIALOGO PARA AGREGAR LISTAS
   // ==========================================================
-  void openAddListDialog(int boardId) {
+  void openAddListDialog(dynamic boardId) {
     final controller = TextEditingController();
 
     showDialog(
@@ -118,7 +118,7 @@ class _BoardScreenState extends State<BoardScreen> {
   // ==========================================================
   // DIALOGO PARA AGREGAR TARJETAS
   // ==========================================================
-  void openAddCardDialog(int listId) {
+  void openAddCardDialog(dynamic listId) {
     Navigator.pushNamed(
       context,
       '/card-create',
@@ -217,7 +217,6 @@ class _BoardScreenState extends State<BoardScreen> {
                       children: [
                         for (int i = 0; i < cards.length; i++)
                           LongPressDraggable<CardModel>(
-                            key: ValueKey(cards[i].id),
                             data: cards[i],
                             feedback: Material(
                               color: Colors.transparent,
@@ -243,8 +242,8 @@ class _BoardScreenState extends State<BoardScreen> {
                                 ),
                               ),
                             ),
-                              child: Container(
-                              padding: const EdgeInsets.all(10),
+                            child: Container(
+                              key: ValueKey(cards[i].id),
                               margin: const EdgeInsets.only(bottom: 10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -259,19 +258,39 @@ class _BoardScreenState extends State<BoardScreen> {
                                   )
                                 ],
                               ),
-                              child: GestureDetector(
-                                onTap: () async {
-                                  final changed = await Navigator.pushNamed(
-                                    context,
-                                    "/card-detail",
-                                    arguments: cards[i],
-                                  );
+                              child: ListTile(
+                                title: GestureDetector(
+                                  onTap: () async {
+                                    final changed = await Navigator.pushNamed(
+                                      context,
+                                      "/card-detail",
+                                      arguments: cards[i],
+                                    );
 
-                                  if (changed == true) setState(() {});
-                                },
-                                child: Text(
-                                  cards[i].title,
-                                  style: const TextStyle(fontSize: 16),
+                                    if (changed == true) setState(() {});
+                                  },
+                                  child: Text(
+                                    cards[i].title,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                                trailing: PopupMenuButton<String>(
+                                  onSelected: (v) async {
+                                    if (v == 'edit') {
+                                      final changed = await Navigator.pushNamed(context, '/card-edit', arguments: cards[i]);
+                                      if (changed == true) setState(() {});
+                                    } else if (v == 'move') {
+                                      await openMoveCardDialog(cards[i]);
+                                    } else if (v == 'delete') {
+                                      await CardService.deleteCard(cards[i].id);
+                                      setState(() {});
+                                    }
+                                  },
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem(value: 'edit', child: Text('Editar')),
+                                    PopupMenuItem(value: 'move', child: Text('Mover')),
+                                    PopupMenuItem(value: 'delete', child: Text('Eliminar')),
+                                  ],
                                 ),
                               ),
                             ),
@@ -294,6 +313,47 @@ class _BoardScreenState extends State<BoardScreen> {
       },
     );
   }
+
+              // ==========================================================
+              // MOVER TARJETA: DIALOG QUE PERMITE SELECCIONAR LISTA DESTINO
+              // ==========================================================
+              Future<void> openMoveCardDialog(CardModel card) async {
+                final board = ModalRoute.of(context)!.settings.arguments as BoardModel;
+
+                final listsInBoard = await ListService.getLists(board.id);
+
+                // Mostrar dialog con listas (excepto la actual)
+                final dynamic targetId = await showDialog<dynamic>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Mover tarjeta a...'),
+                    content: SizedBox(
+                      width: 300,
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: listsInBoard
+                            .where((l) => l.id != card.listId)
+                            .map((l) => ListTile(
+                                  title: Text(l.title),
+                                  onTap: () => Navigator.pop(ctx, l.id),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, null), child: const Text('Cancelar')),
+                    ],
+                  ),
+                );
+
+                if (targetId == null) return;
+
+                // mover via servicio
+                await CardService.moveCard(card.id, targetId);
+
+                // refrescar UI
+                setState(() {});
+              }
 
   // ==========================================================
   // PANTALLA PRINCIPAL

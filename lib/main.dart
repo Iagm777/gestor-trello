@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
+import 'config/app_routes.dart';
 import 'models/card_model.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/board/board_screen.dart';
@@ -35,16 +36,14 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // Pantalla inicial
-      home: const HomeScreen(),
-
-      // Rutas
+      // Use named routes and set initial route based on auth
+      initialRoute: (SupabaseConfig.client.auth.currentUser == null) ? AppRoutes.login : AppRoutes.home,
       routes: {
-        "/board": (_) => const BoardScreen(),
+        ...AppRoutes.routes,
         "/card-detail": (_) => const CardDetailsScreen(),
         "/card-create": (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-          return CreateCardScreen(listId: args['listId'] as int);
+          return CreateCardScreen(listId: args['listId']);
         },
         "/card-edit": (context) {
           final card = ModalRoute.of(context)!.settings.arguments as CardModel;

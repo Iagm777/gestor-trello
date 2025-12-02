@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/list_service.dart';
 
 class CreateListScreen extends StatefulWidget {
-  final int boardId;
+  final dynamic boardId;
 
   const CreateListScreen({
     super.key,
@@ -40,7 +40,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await ListService.createList(_titleController.text, widget.boardId);
+  await ListService.createList(_titleController.text, widget.boardId);
       
       if (!mounted) return;
       Navigator.of(context).pop(true); // Retorna true para forzar refresh

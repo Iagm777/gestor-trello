@@ -1,8 +1,8 @@
 class CardModel {
-  final int id;
+  final dynamic id;
   final String title;
   final String? description;
-  final int listId;
+  final dynamic listId;
   final int position;
 
   // Features nuevas
@@ -25,10 +25,10 @@ class CardModel {
 
   factory CardModel.fromJson(Map<String, dynamic> json) {
     return CardModel(
-      id: json['id'] as int,
+      id: json['id'],
       title: json['title'] as String,
       description: json['description'] as String?,
-      listId: json['list_id'] as int,
+      listId: json['list_id'],
       position: (json['position'] ?? 0) as int,
       labels: (json['labels'] ?? <dynamic>[]).cast<String>(),
       hasChecklist: (json['has_checklist'] ?? false) as bool,
@@ -44,7 +44,7 @@ class CardModel {
       'id': id,
       'title': title,
       'description': description,
-      'list_id': listId,
+        'list_id': listId,
       'position': position,
       'labels': labels,
       'has_checklist': hasChecklist,
@@ -54,10 +54,10 @@ class CardModel {
   }
 
   CardModel copyWith({
-    int? id,
+    dynamic id,
     String? title,
     String? description,
-    int? listId,
+    dynamic listId,
     int? position,
     List<String>? labels,
     bool? hasChecklist,

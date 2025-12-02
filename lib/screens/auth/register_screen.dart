@@ -14,12 +14,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool loading = false;
 
   Future<void> register() async {
+    final email = emailCtrl.text.trim();
+    final password = passCtrl.text.trim();
+
+    // Basic client-side validation to avoid weak password errors from Supabase
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Introduce un email')));
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('La contraseña debe tener al menos 6 caracteres')));
+      return;
+    }
+
     setState(() => loading = true);
 
     try {
       final response = await AuthService.signUp(
-        emailCtrl.text.trim(),
-        passCtrl.text.trim(),
+        email,
+        password,
       );
 
       if (response.user != null) {
@@ -28,11 +42,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         Navigator.pop(context);
+      } else if (response.session == null && response.user == null) {
+        // Supabase may return no user but no exception; show friendly message
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registro enviado. Revisa tu email para confirmar.')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      // Show a cleaner error message for common auth exceptions
+      final msg = e.toString();
+      if (msg.contains('AuthWeakPasswordException') || msg.toLowerCase().contains('password')) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('La contraseña es demasiado débil. Usa al menos 6 caracteres.')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
 
     setState(() => loading = false);

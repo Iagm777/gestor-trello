@@ -5,7 +5,7 @@ class CardService {
   static final _client = SupabaseConfig.client;
 
   // Obtener tarjetas por lista
-  static Future<List<CardModel>> getCards(int listId) async {
+  static Future<List<CardModel>> getCards(dynamic listId) async {
     final response = await _client
         .from('cards')
         .select()
@@ -18,7 +18,7 @@ class CardService {
   }
 
   // Crear tarjeta
-  static Future<void> createCard(String title, int listId) async {
+  static Future<void> createCard(String title, dynamic listId) async {
     final resp = await _client
         .from('cards')
         .select('id')
@@ -35,7 +35,7 @@ class CardService {
   }
 
   // Editar tarjeta
-  static Future<void> updateCard(int id, String title, String? description) async {
+  static Future<void> updateCard(dynamic id, String title, String? description) async {
     await _client.from('cards').update({
       'title': title,
       'description': description,
@@ -43,7 +43,7 @@ class CardService {
   }
 
   // Actualizar posición (para Drag & Drop)
-  static Future<void> updatePosition(int cardId, int newPosition) async {
+  static Future<void> updatePosition(dynamic cardId, int newPosition) async {
     await _client
         .from('cards')
         .update({'position': newPosition})
@@ -51,7 +51,7 @@ class CardService {
   }
 
   // Mover tarjeta entre listas
-  static Future<void> moveCard(int cardId, int newListId) async {
+  static Future<void> moveCard(dynamic cardId, dynamic newListId) async {
     final resp = await _client
         .from('cards')
         .select('id')
@@ -67,7 +67,7 @@ class CardService {
   }
 
   // Actualizar etiquetas
-  static Future<void> updateLabels(int cardId, List<String> labels) async {
+  static Future<void> updateLabels(dynamic cardId, List<String> labels) async {
     await _client
         .from('cards')
         .update({'labels': labels})
@@ -75,7 +75,7 @@ class CardService {
   }
 
   // Toggle checklist
-  static Future<void> toggleChecklist(int cardId, bool value) async {
+  static Future<void> toggleChecklist(dynamic cardId, bool value) async {
     await _client
         .from('cards')
         .update({'has_checklist': value})
@@ -83,15 +83,15 @@ class CardService {
   }
 
   // Actualizar fecha límite
-  static Future<void> updateDueDate(int cardId, DateTime date) async {
+  static Future<void> updateDueDate(dynamic cardId, DateTime? date) async {
     await _client
         .from('cards')
-        .update({'due_date': date.toIso8601String()})
+        .update({'due_date': date?.toIso8601String()})
         .eq('id', cardId);
   }
 
   // Actualizar usuarios asignados
-  static Future<void> updateAssigned(int cardId, List<String> emails) async {
+  static Future<void> updateAssigned(dynamic cardId, List<String> emails) async {
     await _client
         .from('cards')
         .update({'assigned_users': emails})
@@ -99,7 +99,7 @@ class CardService {
   }
 
   // Eliminar tarjeta
-  static Future<void> deleteCard(int id) async {
+  static Future<void> deleteCard(dynamic id) async {
     await _client.from('cards').delete().eq('id', id);
   }
 }

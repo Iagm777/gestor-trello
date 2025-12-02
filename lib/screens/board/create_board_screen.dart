@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/board_service.dart';
+import '../../config/supabase_config.dart';
 
 class CreateBoardScreen extends StatefulWidget {
   const CreateBoardScreen({super.key});
@@ -15,7 +16,17 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
   @override
   Widget build(BuildContext context) {
     // Get userId from arguments or from authenticated user
-    final userId = ModalRoute.of(context)?.settings.arguments as int?;
+    String? userId = ModalRoute.of(context)?.settings.arguments as String?;
+    if (userId == null) {
+      final user = SupabaseConfig.client.auth.currentUser;
+      userId = user?.id;
+      if (userId == null) {
+        // No authenticated user found — navigate to login so user can authenticate
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.pushReplacementNamed(context, '/login');
+        });
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text("Nuevo tablero")),
